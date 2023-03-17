@@ -1,3 +1,6 @@
+| Bandcamp | Discogs | Apple | Ototoy | 163Music |
+| :------: | :-----: | :---: | :----: | :------: |
+---
 # 豆瓣添加条目助手 Douban listing helper
 
 我的豆瓣 Follow me on Douban: lzqqqqqq (https://www.douban.com/people/49528893/)

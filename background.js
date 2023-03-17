@@ -13,6 +13,7 @@ browser.runtime.onMessage.addListener((msg, sender, sendResponse) =>{
         downloadConfig = {'url': meta['imgUrl']};
         switch (msg.page){
             case "ototoy":
+            case "163":
             case "apple": 
                 downloadConfig['filename'] = meta['album'].replace(/[/\:*?"<>]/,"")+'.jpg'
         }

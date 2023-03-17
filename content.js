@@ -16,9 +16,9 @@ let getCurrentPage=()=>{
             break;
         case 'bandcamp':
         case 'discogs':
-        case 'soundcloud':
         case 'apple':
         case 'ototoy':
+        case '163':
             page=site;
             break;
     }
@@ -46,7 +46,8 @@ let fillDouban1=(meta, click=false) =>{
     } else{
         button=document.getElementsByClassName('btn-link')[0];
     }
-    if (click) button.click(); 
+    // 自己填写barcode
+    // if (click) button.click(); 
 }
 
 // douban listing page 2
@@ -102,6 +103,7 @@ let fillDouban2=(meta,click=false) =>{
                 });
     document.getElementsByClassName('item text section')[0].getElementsByClassName('textarea_basic')[0].value= meta['tracks'];
     document.getElementsByClassName('item text section')[1].getElementsByClassName('textarea_basic')[0].value=meta['description'];
+    document.getElementsByClassName('item text section')[2].getElementsByClassName('textarea_basic')[0].value=meta['reference'];
 
     if (click) document.getElementsByClassName('submit')[0].click();
 }
@@ -119,7 +121,7 @@ let fillDouban3=(meta,click=false) =>{ // TODO: auto-select image
 let createButton = (currentPage)=>{
     var button=document.createElement("Button");
     button.innerHTML ="Collect";
-    button.style = "top:0;left:0;position:absolute;z-index:9999";
+    button.style = "top:0;left:0;position:absolute;z-index:9999;color:#4e4e53;opacity:1;display:block;border:1px solid gray;background:rgba(255,255,255,.8);font-size:16px";
     button.onclick=function(){
         let meta=collectMeta(currentPage);
         browser.runtime.sendMessage({page:currentPage,meta: JSON.stringify(meta)});
@@ -174,12 +176,12 @@ let collectMeta=(currentPage) => {
             return collectBandcampMeta();
         case "discogs":
             return collectDiscogsMeta();
-        case "soundcloud":
-           return collectSoundcloudMeta();
         case "apple":
             return collectAppleMeta();
         case "ototoy":
             return collectOtotoyMeta();
+        case "163":
+            return collect163Meta();
         default:
             return null
     }
@@ -201,8 +203,36 @@ let collectOtotoyMeta=() => {
         'isrc':null,
         'tracks':Array.from(document.querySelectorAll("[id^=title-]")).map((item,index)=>(index+1)+'. '+item.textContent.trim()).join('\n'),
         'description':checkUndefined(document.getElementsByClassName("album-review")[0],(item)=> item.textContent.trim()),     //可能获取到错误的描述
-        'imgUrl':document.getElementById("jacket-full-wrapper").children[0].getAttribute("data-src")
+        'imgUrl':document.getElementById("jacket-full-wrapper").children[0].getAttribute("data-src"),
+        'reference':document.URL
     }
+    console.log(out);
+    return out;
+}
+
+let collect163Meta=() => {
+    const iframe = document.getElementById('g_iframe').contentWindow.document;
+    out = {
+        'url':document.URL,
+        'album':iframe.getElementsByClassName('f-ff2')[0].textContent.trim(),
+        'barcode':null,
+        'albumAltName'  : null,
+        "artists": Array.from(iframe.getElementsByClassName('intr')[0].getElementsByTagName('span')[0].children).map((item)=>item.textContent.trim()),
+        'genre':'Pop',
+        'releaseType': 'Single',
+        'media': 'Digital',
+        'date': iframe.getElementsByClassName('intr')[1].textContent.trim().match('\\d{4}-\\d{2}-\\d{2}')[0],
+        'label':null,
+        'numberOfDiscs':null,
+        'isrc':null,
+        'tracks':Array.from(iframe.getElementsByTagName('tbody')[0].getElementsByClassName('f-cb')).map((item,index)=>(index+1)+'. '+item.getElementsByTagName('b')[0].getAttribute('title').trim()).join('\n'),
+        'description':null,
+        'imgUrl':iframe.getElementsByClassName('j-img')[0].getAttribute('data-src'),
+        'reference':document.URL
+    }
+    try{
+        out['label'] =  iframe.getElementsByClassName('intr')[2].textContent.replace('发行公司：','').replaceAll('\n','').trim()
+    } catch (err){}
     console.log(out);
     return out;
 }
@@ -224,8 +254,9 @@ let collectBandcampMeta=() =>{
         'tracks'        : Array.from(document.getElementById('track_table').children[0].getElementsByClassName("track_row_view")).map((ele) =>{
                             return ele.textContent.replaceAll(/[\n\t ]+/g,' ').replace(/ *buy track */,'').replace(/ *lyrics */,'').replace(/ *video */,'').trim()
                         }).join('\n').trim(), 
-        'description'   : document.URL,
-        'imgUrl'        : document.getElementById('tralbumArt').children[0].href
+        'description'   : null,
+        'imgUrl'        : document.getElementById('tralbumArt').children[0].href,
+        'reference'     : document.URL
     }
     out['date']=formatDate(out['date']);
     try{
@@ -236,7 +267,7 @@ let collectBandcampMeta=() =>{
 
 let collectDiscogsMeta=()=>{ // TODO
     out={}
-    let keys=['url' ,'album','barcode','albumAltName' ,'artists','genre','releaseType'  ,'media','date','label','numberOfDiscs','isrc','tracks','description'  ,'imgUrl' ]
+    let keys=['url' ,'album','barcode','albumAltName' ,'artists','genre','releaseType'  ,'media','date','label','numberOfDiscs','isrc','tracks','description'  ,'imgUrl', 'reference' ]
     for (const key of keys) out[key]=null;
 
     let profileBlock=document.getElementsByClassName('profile')[0]
@@ -285,22 +316,18 @@ let collectDiscogsMeta=()=>{ // TODO
     if (noteBlock) out['description']+='\n\n'+noteBlock.children[1].textContent.trim();
 
     out['imgUrl']=JSON.parse(document.getElementById('page_content').getElementsByClassName("image_gallery")[0].attributes['data-images'].nodeValue)[0]['full'];
+    out['reference']= document.URL
 
     return out;
 }
 
-
-let collectSoundcloudMeta=()=>{ // TODO
-    return null
-}
-
 let collectAppleMeta=()=>{ // TODO
     out={}
-    let keys=['url' ,'album','barcode','albumAltName' ,'artists','genre','releaseType'  ,'media','date','label','numberOfDiscs','isrc','tracks','description'  ,'imgUrl' ]
+    let keys=['url' ,'album','barcode','albumAltName' ,'artists','genre','releaseType'  ,'media','date','label','numberOfDiscs','isrc','tracks','description'  ,'imgUrl', 'reference' ]
     for (const key of keys) out[key]=null;
 
     out['url']= document.URL;
-    out['album']=document.getElementsByClassName("headings__title")[0].textContent.trim();
+    out['album']=document.getElementsByClassName("headings__title")[0].textContent.replace(" - Single","").trim();
     out['barcode']=null;
     out['artists']=Array.from(document.querySelectorAll(".headings__subtitles a")).map((item)=>item.textContent);
     // let genre=document.getElementsByClassName('album-header-metadata')[0].children[2].textContent.trim().split("·")[0].trim();
@@ -328,6 +355,8 @@ let collectAppleMeta=()=>{ // TODO
     try{
         out['imgUrl']=document.getElementsByClassName("artwork__radiosity")[0].querySelector('[type="image/jpeg"]').getAttribute("srcset").split(",").slice(-1)[0].match(/.*\.jpg/)[0];
     } catch(err){}
+
+    out['reference']= document.URL
     return out;
 }
 
@@ -347,7 +376,8 @@ let _metaTest={
     'numOfDiscs'    :'numOfDiscs'    ,
     'isrc'          :'isrc'          ,
     'tracks'        :'tracks'        ,
-    'description'   :'description'   
+    'description'   :'description'   ,
+    'reference'     :'reference'   
 }
 
 // console.log("Testing plugin");
@@ -365,7 +395,7 @@ switch(currentPage){
     case 'discogs':
     case 'apple':
     case 'ototoy':
-    // case 'soundcloud':
+    case '163':
         createButton(currentPage);
     case 'douban-1':
     case 'douban-2':
