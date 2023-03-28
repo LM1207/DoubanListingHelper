@@ -225,7 +225,7 @@ let collect163Meta=() => {
         'label':null,
         'numberOfDiscs':null,
         'isrc':null,
-        'tracks':Array.from(iframe.getElementsByTagName('tbody')[0].getElementsByClassName('f-cb')).map((item,index)=>(index+1)+'. '+item.getElementsByTagName('b')[0].getAttribute('title').trim()).join('\n'),
+        'tracks':Array.from(iframe.getElementsByTagName('tbody')[0].getElementsByClassName('f-cb')).map((item,index)=>(index+1)+'. '+item.getElementsByTagName('b')[0].getAttribute('title')).join('\n'),
         'description':null,
         'imgUrl':iframe.getElementsByClassName('j-img')[0].getAttribute('data-src'),
         'reference':document.URL
